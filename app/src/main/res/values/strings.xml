@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">BiliTweak</string>
+    <string name="app_options">DeviceAddressTweaker-Options</string>
+    <string name="refresh">refresh</string>
+    <string-array name="scope">
+        <item>tv.danmaku.bili</item>
+    </string-array>
+</resources>
