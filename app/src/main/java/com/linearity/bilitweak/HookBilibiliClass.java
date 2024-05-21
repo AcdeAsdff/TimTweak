@@ -3,6 +3,7 @@ package com.linearity.bilitweak;
 
 import static com.linearity.utils.HookUtils.findAndHookMethodIfExists;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
+import static com.linearity.utils.LoggerUtils.showObjectFields;
 import static com.linearity.utils.ReturnReplacements.returnFalse;
 import static com.linearity.utils.ReturnReplacements.returnIntegerZero;
 import static com.linearity.utils.ReturnReplacements.returnLongZero;
@@ -656,7 +657,13 @@ public class HookBilibiliClass {
                                     findAndHookMethodIfExists(hookClass,"A", Intent.class, boolean.class, returnTrue);
                                 }
                             }
-
+                            {
+                                //不完全致敬:FuckBilibiliVote
+                                hookClass = XposedHelpers.findClassIfExists("com.bapis.bilibili.community.service.dm.v1.DmViewReply",lpparam.classLoader);
+                                if (hookClass != null){
+                                    XposedBridge.hookAllMethods(hookClass,"dynamicMethod",returnNull);
+                                }
+                            }
 
 //                            {
 //                                hookClass = XposedHelpers.findClassIfExists("com.bapis.bilibili.main.community.reply.v1.ReplyInfo",lpparam.classLoader);
