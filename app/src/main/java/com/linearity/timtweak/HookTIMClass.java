@@ -7,6 +7,8 @@ import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_INT_ARRA
 import static com.linearity.utils.FakeInfo.FakeProcInfoGenerator.random;
 import static com.linearity.utils.HookUtils.disableClass;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
+import static com.linearity.utils.LoggerUtils.showArgs;
+import static com.linearity.utils.LoggerUtils.showObjectFields;
 import static com.linearity.utils.ReturnReplacements.byteArray114514;
 import static com.linearity.utils.ReturnReplacements.getRandomString;
 import static com.linearity.utils.ReturnReplacements.returnFalse;
@@ -35,6 +37,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.linearity.timtweak.TIMUtils.QQConcurrentHashMap;
 import com.linearity.utils.HookUtils;
@@ -47,12 +50,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+import dalvik.system.DexClassLoader;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
@@ -61,6 +67,8 @@ import de.robv.android.xposed.callbacks.XC_LayoutInflated;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class HookTIMClass {
+    public static final Collection<ClassLoader> classLoaders = new HashSet<>();
+    public static XC_LoadPackage.LoadPackageParam lpparam;
     public static WifiInfo fakeWifiInfo =
             new WifiInfo.Builder()
                     .setBssid(ReturnReplacements.getRandomString(20))
@@ -73,10 +81,11 @@ public class HookTIMClass {
     public static final String[] blockMsgHead = new String[]{
             "谨防兼职刷单、游戏交易、投资荐股、色情招嫖、仿冒公检法及客服人员的网络骗局，如有资金往来请谨慎操作"
     };
-    public static void DoHook(XC_LoadPackage.LoadPackageParam lpparam) {
+    public static void DoHook(XC_LoadPackage.LoadPackageParam lpparam0) {
 
         if (HookTIM) {
             try {
+                lpparam = lpparam0;
 
 //                if (!lpparam.processName.equals("com.tencent.tim:peak"))
                 {
@@ -1785,10 +1794,65 @@ public class HookTIMClass {
 //                    }
                 }
 
+                {
+
+                    hookClass = XposedHelpers.findClassIfExists("com.tencent.mobileqq.pluginsdk.PluginUtils",lpparam.classLoader);
+                    if (hookClass != null){
+                        XposedBridge.hookAllMethods(hookClass, "getPluginLibPath", new XC_MethodHook() {
+                            @Override
+                            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                                super.afterHookedMethod(param);
+                                hookQZonePlugin();
+                            }
+                        });
+                        XposedBridge.hookAllMethods(hookClass, "getPluginCfgFile", new XC_MethodHook() {
+                            @Override
+                            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                                super.afterHookedMethod(param);
+                                hookQZonePlugin();
+                            }
+                        });
+                        XposedBridge.hookAllMethods(hookClass, "getInstalledPluginPath", new XC_MethodHook() {
+                            @Override
+                            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                                super.afterHookedMethod(param);
+                                hookQZonePlugin();
+                            }
+                        });
+                    }
+
+                }
+                {
+//                    hookClass = XposedHelpers.findClassIfExists("com.tencent.mobileqq.pluginsdk.PluginStatic",lpparam.classLoader);
+                    if (hookClass != null){
+                        XposedBridge.hookAllConstructors(DexClassLoader.class, new XC_MethodHook() {
+                            @Override
+                            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                                super.afterHookedMethod(param);
+                                if (param.thisObject != null){
+                                    classLoaders.add((ClassLoader) param.thisObject);
+                                }
+                            }
+                        });
+                    }
+                }
+//                hookClass = XposedHelpers.findClassIfExists("com.tencent.mobileqq.widget.QQToast",lpparam.classLoader);
+//                if (hookClass != null){
+//                    XposedBridge.hookAllMethods(Toast.class, "show", new XC_MethodHook() {
+//                        @Override
+//                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//                            super.beforeHookedMethod(param);
+////                            String s = String.valueOf(XposedHelpers.getObjectField(param.thisObject,"message"));
+//                            LoggerLog(new Exception("n"));
+//                        }
+//                    });
+//                }
             } catch (Exception e) {
                 LoggerLog(e);
             }
+
         }
+
     }
 
 
@@ -2351,6 +2415,122 @@ public class HookTIMClass {
                         break;
                     }
                 }
+            }
+        }
+    }
+
+
+    public static final XC_MethodHook setSelfAllBooleanTrue = new XC_MethodHook() {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            super.afterHookedMethod(param);
+            setObjectAllBooleanTrue(param.thisObject);
+        }
+    };
+    public static final XC_MethodHook setResultAllBooleanTrue = new XC_MethodHook() {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            super.afterHookedMethod(param);
+            setObjectAllBooleanTrue(param.getResult());
+        }
+    };
+    public static void setObjectAllBooleanTrue(Object ret){
+        if (ret == null){return;}
+        for (Field f:ret.getClass().getDeclaredFields()){
+            if (f.getType().equals(Boolean.TYPE)){
+                XposedHelpers.setBooleanField(ret, f.getName(), true);
+            }
+        }
+    }
+    public static final XC_MethodHook setResultCanShareTrue = new XC_MethodHook() {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            super.afterHookedMethod(param);
+            setObjectCanShareTrue(param.getResult());
+        }
+    };
+    public static void setObjectCanShareTrue(Object ret){
+        if (ret == null){return;}
+        XposedHelpers.setBooleanField(ret, "canShare", true);
+    }
+    public static void hookQZonePlugin(){
+        Class<?> hookClass;
+        for (ClassLoader classLoader:classLoaders){
+//            //gotcha!
+            hookClass = XposedHelpers.findClassIfExists("com.qzone.module.feedcomponent.ui.FeedViewBuilder",classLoader);
+            if (hookClass != null){
+                XposedBridge.hookAllMethods(hookClass, "setFeedViewData", new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        super.beforeHookedMethod(param);
+                        if (param.args[2]==null){return;}
+                        Object cellUserInfo = XposedHelpers.getObjectField(param.args[2],"cellUserInfo");
+                        if (cellUserInfo == null){return;}
+                        Object user = XposedHelpers.getObjectField(cellUserInfo,"user");
+                        if (user == null){return;}
+                        long uin = XposedHelpers.getLongField(user,"uin");
+                        if (uin == 20050606L){
+//                            LoggerLog(new Exception(String.valueOf(uin)));
+                            param.setResult(null);//nop
+                            return;
+                        }
+                        setObjectCanShareTrue(XposedHelpers.getObjectField(param.args[2],"cellLocalInfo"));
+//                        LoggerLog("================================");
+//                        showObjectFields(param.args[2]);
+                    }
+                });
+
+            }
+
+//            hookClass = XposedHelpers.findClassIfExists("com.qzone.preview.QzonePictureViewer",classLoader);
+//            if (hookClass != null){
+//                XposedBridge.hookAllMethods(hookClass,"a", new XC_MethodHook() {
+//                    @Override
+//                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//                        super.beforeHookedMethod(param);
+//                        showArgs(param.args);
+//                        LoggerLog(new Exception("l"));
+//                    }
+//                });
+//            }
+//            hookClass = XposedHelpers.findClassIfExists("com.qzone.util.ToastUtil$2",classLoader);
+//            if (hookClass != null){
+//                XposedBridge.hookAllConstructors(hookClass, new XC_MethodHook() {
+//                    @Override
+//                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//                        super.beforeHookedMethod(param);
+//                        showArgs(param.args);
+//                        LoggerLog(new Exception("m"));
+//                    }
+//                });
+//            }
+            hookClass = XposedHelpers.findClassIfExists("com.qzone.commoncode.module.verticalvideolayer.VerticalFeedOperateLogic",classLoader);
+            if (hookClass != null){
+                XposedBridge.hookAllMethods(hookClass,"canShare",returnTrue);
+            }
+            hookClass = XposedHelpers.findClassIfExists("com.qzone.proxy.feedcomponent.model.BusinessFeedData",classLoader);
+            if (hookClass != null){
+                XposedBridge.hookAllMethods(hookClass,"getLocalInfo",setResultCanShareTrue);
+                XposedBridge.hookAllMethods(hookClass,"getLocalInfoV2",setResultCanShareTrue);
+            }
+            int ALLOW_SHARE = 0;
+            hookClass = XposedHelpers.findClassIfExists("com.qzone.proxy.feedcomponent.model.CellPictureInfo",classLoader);
+            if (hookClass != null){
+                XposedBridge.hookAllConstructors(hookClass, new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        super.afterHookedMethod(param);
+                        XposedHelpers.setObjectField(param.thisObject,"allow_share",ALLOW_SHARE);
+                    }
+                });
+                XposedBridge.hookAllMethods(hookClass, "create", new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        super.afterHookedMethod(param);
+                        if (param.getResult() == null){return;}
+                        XposedHelpers.setObjectField(param.getResult(),"allow_share",ALLOW_SHARE);
+                    }
+                });
             }
         }
     }

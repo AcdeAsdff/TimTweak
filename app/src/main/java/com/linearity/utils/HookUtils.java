@@ -26,6 +26,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class HookUtils {
     public static XC_MethodHook.Unhook findAndHookMethodIfExists(String className, ClassLoader classLoader, String methodName, Object... parameterTypesAndCallback){
@@ -170,11 +171,16 @@ public class HookUtils {
     public static void listenMethod(@NotNull Method m,@NotNull Class<?> selfClass){
         XposedBridge.hookMethod(m, new XC_MethodHook() {
             @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                super.beforeHookedMethod(param);
-                LoggerLog(new Exception("listening method: "+m.getName()+" "+selfClass.getName()));
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                super.afterHookedMethod(param);
+                StringBuilder sb = new StringBuilder();
+                for (Object o:param.args){
+                    sb.append(String.valueOf(o)).append("|");
+                }
+                LoggerLog(new Exception("listening method: "+m.getName()+" "+selfClass.getName() + " \nargs: " + sb.toString() + " \nresult:" + String.valueOf(param.getResult())));
             }
-
         });
     }
+
+
 }

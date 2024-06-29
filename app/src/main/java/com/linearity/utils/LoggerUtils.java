@@ -113,6 +113,9 @@ public class LoggerUtils {
             }
 //        LoggerLog(prefix + " ----fields end-----");
         }
+        public static void showObjectFields(Object obj){
+            showObjectFields(obj, "    ");
+        }
 
         public static void showObjectFields(Object obj, String prefix){
             showObjectFields(obj, prefix,new HashSet<Object>());
