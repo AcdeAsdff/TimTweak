@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:multiArch="true"
+        android:extractNativeLibs="false"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -17,7 +19,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="Tweak bilibili,disable ads." />
+            android:value="Tweak tim." />
         <meta-data
             android:name="xposedminversion"
             android:value="53" />

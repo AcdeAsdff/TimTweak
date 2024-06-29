@@ -3,12 +3,12 @@ plugins {
 }
 
 android {
-    namespace 'com.linearity.bilitweak'
+    namespace 'com.linearity.timtweak'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.linearity.bilitweak"
-        minSdk 24
+        applicationId "com.linearity.timtweak"
+        minSdk 31
         targetSdk 34
         versionCode 1
         versionName "1.0"
@@ -28,6 +28,7 @@ android {
 }
 
 dependencies {
-
     compileOnly 'de.robv.android.xposed:api:82'
+//    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
 }
